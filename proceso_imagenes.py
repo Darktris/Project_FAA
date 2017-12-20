@@ -6,9 +6,12 @@ from skimage.transform import hough_line, hough_line_peaks, probabilistic_hough_
 from skimage.morphology import skeletonize, skeletonize_3d
 from skimage.filters import median as filt_med
 from skimage.morphology import disk
+from scipy.signal import resample as rs
 
 __umbral__ = 122
 __disk_size__= 21
+__ancho_ventana__=10
+__n_bins__ = 64
 
 def cargar_numeros(folder):
     files = os.listdir(folder)
@@ -89,6 +92,34 @@ def alto_numero(imagen):
 
 def ancho_numero(imagen):
     return alto_numero(imagen.T)
+
+def convolucion(histograma):
+    return np.convolve(histograma, np.ones(shape=(__ancho_ventana__,)) / __ancho_ventana__,mode='same')
+
+
+def estirar(histograma):
+    index_left = 0
+    index_right = 0
+
+    for index, valor in enumerate(histograma):
+        if valor > 0:
+            index_left = index
+            break
+
+    for index, valor in enumerate(reversed(histograma)):
+        if valor > 0:
+            index_right = histograma.shape[0]-index
+            break
+
+    return histograma[index_left:index_right]
+
+def resample(histograma,n_bins = __n_bins__):
+        return rs(histograma,n_bins),n_bins
+
+def estandarizar(histograma):
+    return resample(estirar(histograma))[0]
+
+
 
 
 
