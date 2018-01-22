@@ -11,7 +11,7 @@ from scipy.signal import resample as rs
 __umbral__ = 122
 __disk_size__= 21
 __ancho_ventana__=10
-__n_bins__ = 64
+__n_bins__ = 128
 
 def cargar_numeros(folder):
     files = os.listdir(folder)
@@ -23,7 +23,7 @@ def cargar_numeros(folder):
         clase = int(file[-5])
         clases.append(clase)
 
-    return images, clases
+    return np.asarray(images), np.asarray(clases)
 
 def intensidad_media(image):
     return np.mean(image)
@@ -93,33 +93,37 @@ def alto_numero(imagen):
 def ancho_numero(imagen):
     return alto_numero(imagen.T)
 
-def convolucion(histograma):
-    return np.convolve(histograma, np.ones(shape=(__ancho_ventana__,)) / __ancho_ventana__,mode='same')
+def convolucion(proyeccion):
+    return np.convolve(proyeccion, np.ones(shape=(__ancho_ventana__,)) / __ancho_ventana__, mode='same')
 
 
-def estirar(histograma):
+def estirar(proyeccion):
     index_left = 0
     index_right = 0
 
-    for index, valor in enumerate(histograma):
+    for index, valor in enumerate(proyeccion):
         if valor > 0:
             index_left = index
             break
 
-    for index, valor in enumerate(reversed(histograma)):
+    for index, valor in enumerate(reversed(proyeccion)):
         if valor > 0:
-            index_right = histograma.shape[0]-index
+            index_right = proyeccion.shape[0] - index
             break
 
-    return histograma[index_left:index_right]
+    return proyeccion[index_left:index_right]
 
-def resample(histograma,n_bins = __n_bins__):
-        return rs(histograma,n_bins),n_bins
+def resample(proyeccion, n_bins = __n_bins__):
+        return rs(proyeccion, n_bins)
 
-def estandarizar(histograma):
-    return resample(estirar(histograma))[0]
+def estandarizar(proyeccion):
+    proyeccion_est = resample(estirar(proyeccion))
+    proyeccion_est[proyeccion_est<0] = 0
 
+    return proyeccion_est
 
+def preparar(proyeccion):
+    return convolucion(estandarizar(proyeccion))
 
 
 
